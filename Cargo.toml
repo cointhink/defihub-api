@@ -25,3 +25,4 @@ sqlx = { version = "0.7.4", default-features = false, features = [
 ] }
 toml = "0.8.19"
 time = "0.3.36"
+colog = "1.3.0"

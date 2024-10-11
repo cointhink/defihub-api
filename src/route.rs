@@ -29,6 +29,7 @@ pub(crate) async fn pools_top(
         Some(since) => since_parse(since),
         None => 24,
     };
+    log::info!("/pools/top?since={}", since.unwrap_or("<none>"));
     Cors(Json(
         sql::top_pools(
             db,

@@ -23,6 +23,7 @@ pub struct AppConfig {
 
 #[launch]
 fn rocket() -> _ {
+    colog::init();
     rocket::build()
         .attach(sql::AuthDb::init())
         .attach(sql::migrate())
