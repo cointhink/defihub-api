@@ -40,6 +40,14 @@ pub(crate) async fn pools_top(
     ))
 }
 
+#[get("/pools/for?<token_contract_address>")]
+pub(crate) async fn pools_for(
+    db: Connection<sql::AuthDb>,
+    token_contract_address: &str,
+) -> Cors<Json<Vec<pool::Pool>>> {
+    Cors(Json(sql::pools_for(db, token_contract_address).await))
+}
+
 fn since_parse(since: &str) -> u32 {
     u32::from_str_radix(since, 10).unwrap()
 }

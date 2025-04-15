@@ -104,6 +104,24 @@ pub async fn insert(mut db: Connection<AuthDb>, account: &Account) {
         .unwrap();
 }
 
+pub async fn pools_for(mut db: Connection<AuthDb>, token_contract_address: &str) -> Vec<Pool> {
+    let sql = "select * from pools where token0 = $1 or token1 = $1 limit 10";
+    match query(sql)
+        .bind(token_contract_address)
+        .fetch_all(&mut **db)
+        .await
+    {
+        Ok(rows) => {
+            let mut r = vec![];
+            for pool_row in rows {
+                r.push(Pool::from_row(&pool_row));
+            }
+            r
+        }
+        Err(_e) => vec![],
+    }
+}
+
 pub async fn top_pools(
     mut db: Connection<AuthDb>,
     start_block: &block::Number,
