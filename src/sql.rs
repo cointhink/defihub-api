@@ -105,7 +105,7 @@ pub async fn insert(mut db: Connection<AuthDb>, account: &Account) {
 }
 
 pub async fn pools_for(mut db: Connection<AuthDb>, token_contract_address: &str) -> Vec<Pool> {
-    let sql = "select * from pools where token0 = $1 or token1 = $1 limit 10";
+    let sql = "select * from pools where token0 = $1 or token1 = $1 limit 20";
     match query(sql)
         .bind(token_contract_address)
         .fetch_all(&mut **db)
