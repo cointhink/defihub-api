@@ -141,7 +141,7 @@ pub async fn top_pairs_pools(
    JOIN pools AS p2 ON p1.token0 = p2.token0 AND p1.token1 = p2.token1 AND p1.contract_address != p2.contract_address
    JOIN latest_reserves AS lrp1 ON p1.contract_address = lrp1.contract_address AND lrp1.row_number = 1
    JOIN latest_reserves AS lrp2 ON p2.contract_address = lrp2.contract_address AND lrp2.row_number = 1
-   ORDER BY value ";
+   ORDER BY value desc LIMIT 10";
     match query(sql)
         .bind::<i32>(start_block.into())
         .bind::<i32>(stop_block.into())
