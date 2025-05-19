@@ -19,6 +19,27 @@ impl<'r, 'o: 'r, R: Responder<'r, 'o>> Responder<'r, 'o> for Cors<R> {
     }
 }
 
+#[get("/pools/top_pairs?<since>")]
+pub(crate) async fn pools_top_pairs(
+    mut db: Connection<sql::AuthDb>,
+    since: Option<&str>,
+) -> Cors<Json<Vec<(pool::Pool, pool::Pool, f64)>>> {
+    let latest_block = block::find_latest(&mut db).await.unwrap();
+    let hours_ago = match since {
+        Some(since) => since_parse(since),
+        None => 24,
+    };
+    log::info!("/pools/top_pairs?since={}", since.unwrap_or("<none>"));
+    Cors(Json(
+        sql::top_pairs_pools(
+            db,
+            &latest_block.number.hours_ago(hours_ago),
+            &latest_block.number,
+        )
+        .await,
+    ))
+}
+
 #[get("/pools/top?<since>")]
 pub(crate) async fn pools_top(
     mut db: Connection<sql::AuthDb>,

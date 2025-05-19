@@ -36,7 +36,8 @@ fn rocket() -> _ {
                 route::register,
                 route::pools_top,
                 route::pools_since,
-                route::pools_for
+                route::pools_for,
+                route::pools_top_pairs
             ],
         )
 }
