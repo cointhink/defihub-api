@@ -46,10 +46,17 @@ where
 
 impl Reserve {
     pub fn from_row(row: &<Postgres as rocket_db_pools::sqlx::Database>::Row) -> Reserve {
+        Self::from_row_with_names(row, ["lpr1.block_number", "qty_x1", "qty_y1"])
+    }
+
+    pub fn from_row_with_names(
+        row: &<Postgres as rocket_db_pools::sqlx::Database>::Row,
+        names: [&str; 3],
+    ) -> Reserve {
         Reserve {
-            block_number: row.get::<i32, &str>("block_number") as u32,
-            x: row.get::<String, &str>("x"),
-            y: row.get::<String, &str>("y"),
+            block_number: row.get::<i32, &str>(names[0]) as u32,
+            x: row.get::<String, &str>(names[1]),
+            y: row.get::<String, &str>(names[2]),
         }
     }
 }

@@ -8,7 +8,7 @@ use crate::models::{
     account::{self, Account},
     block, coin,
     pool::{self, Pool},
-    reserve,
+    reserve::{self, Reserve},
 };
 
 #[derive(Database)]
@@ -126,14 +126,14 @@ pub async fn top_pairs_pools(
     mut db: Connection<AuthDb>,
     start_block: &block::Number,
     stop_block: &block::Number,
-) -> Vec<(Pool, Pool, f64)> {
-    let sql = " WITH latest_reserves AS
+) -> Vec<(Pool, Pool, f64, Reserve, Reserve)> {
+    let sql = "WITH latest_reserves AS
     (SELECT contract_address, block_number, x,y, ROW_NUMBER() OVER(PARTITION BY contract_address ORDER BY block_number)
       FROM reserves ORDER BY contract_address, block_number)
    SELECT p1.contract_address as p1_contract_address,
           p2.contract_address as p2_contract_address,
-          least(lrp1.x, lrp2.x) AS qty_x,
-          least(lrp1.y, lrp2.y) AS qty_y,
+          lrp1.x as qty_x1, lrp2.x AS qty_x2, lrp1.block_number AS p1_block_number,
+          lrp1.y as qty_y1, lrp2.y AS qty_y2, lrp2.block_number AS p2_block_number,
           (((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal)) / (lrp1.x::decimal/lrp1.y::decimal)) as spread,
           least(lrp1.x::decimal * lrp1.y::decimal, lrp2.x::decimal * lrp2.y::decimal) *
              (((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal)) / (lrp1.x::decimal/lrp1.y::decimal))::float as value
@@ -157,7 +157,13 @@ pub async fn top_pairs_pools(
                 let pool2 = pool::find_by_address(&mut **db, row.get("p2_contract_address"))
                     .await
                     .unwrap();
-                r.push((pool1, pool2, row.get("value")));
+                r.push((
+                    pool1,
+                    pool2,
+                    row.get("value"),
+                    Reserve::from_row_with_names(&row, ["p1_block_number", "qty_x1", "qty_y1"]),
+                    Reserve::from_row_with_names(&row, ["p2_block_number", "qty_x2", "qty_y2"]),
+                ));
             }
             r
         }
