@@ -124,8 +124,8 @@ pub async fn pools_for(mut db: Connection<AuthDb>, token_contract_address: &str)
 
 pub async fn top_pairs_pools(
     mut db: Connection<AuthDb>,
-    start_block: &block::Number,
-    stop_block: &block::Number,
+    _start_block: &block::Number,
+    _stop_block: &block::Number,
 ) -> Vec<(Pool, Pool, f64, Reserve, Reserve)> {
     let sql = "WITH latest_reserves AS
     (SELECT contract_address, block_number, x,y, ROW_NUMBER() OVER(PARTITION BY contract_address ORDER BY block_number)
@@ -134,17 +134,16 @@ pub async fn top_pairs_pools(
           p2.contract_address as p2_contract_address,
           lrp1.x as qty_x1, lrp2.x AS qty_x2, lrp1.block_number AS p1_block_number,
           lrp1.y as qty_y1, lrp2.y AS qty_y2, lrp2.block_number AS p2_block_number,
-          (((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal)) / (lrp1.x::decimal/lrp1.y::decimal)) as spread,
-          least(lrp1.x::decimal * lrp1.y::decimal, lrp2.x::decimal * lrp2.y::decimal) *
-             (((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal)) / (lrp1.x::decimal/lrp1.y::decimal))::float as value
+          ABS((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal)) as spread,
+          (least(lrp1.x::decimal , lrp2.x::decimal ) *
+             ABS((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal))::decimal as value
    FROM pools AS p1
-   JOIN pools AS p2 ON p1.token0 = p2.token0 AND p1.token1 = p2.token1 AND p1.contract_address != p2.contract_address
+   JOIN pools AS p2 ON p1.token0 = p2.token0 AND p1.token1 = p2.token1 AND p1.contract_address != p2.contract_address AND p1.token0 = $1
    JOIN latest_reserves AS lrp1 ON p1.contract_address = lrp1.contract_address AND lrp1.row_number = 1
    JOIN latest_reserves AS lrp2 ON p2.contract_address = lrp2.contract_address AND lrp2.row_number = 1
    ORDER BY value desc LIMIT 10";
     match query(sql)
-        .bind::<i32>(start_block.into())
-        .bind::<i32>(stop_block.into())
+        .bind::<&str>("c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2")
         .fetch_all(&mut **db)
         .await
     {
