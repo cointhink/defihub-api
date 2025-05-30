@@ -134,9 +134,9 @@ pub async fn top_pairs_pools(
           p2.contract_address as p2_contract_address,
           lrp1.x as qty_x1, lrp2.x AS qty_x2, lrp1.block_number AS p1_block_number,
           lrp1.y as qty_y1, lrp2.y AS qty_y2, lrp2.block_number AS p2_block_number,
-          ABS((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal)) as spread,
+          ABS((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal))::float8 as spread,
           (least(lrp1.x::decimal , lrp2.x::decimal ) *
-             ABS((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal))::decimal as value
+             ABS((lrp1.x::decimal/lrp1.y::decimal) - (lrp2.x::decimal/lrp2.y::decimal)))::float8 as value
    FROM pools AS p1
    JOIN pools AS p2 ON p1.token0 = p2.token0 AND p1.token1 = p2.token1 AND p1.contract_address != p2.contract_address AND p1.token0 = $1
    JOIN latest_reserves AS lrp1 ON p1.contract_address = lrp1.contract_address AND lrp1.row_number = 1
@@ -166,7 +166,10 @@ pub async fn top_pairs_pools(
             }
             r
         }
-        Err(_e) => vec![],
+        Err(e) => {
+            log::error!("{}", e);
+            vec![]
+        }
     }
 }
 
