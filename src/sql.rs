@@ -128,7 +128,7 @@ pub async fn top_pairs_pools(
     _stop_block: &block::Number,
 ) -> Vec<(Pool, Pool, f64, Reserve, Reserve)> {
     let sql = "WITH latest_reserves AS
-    (SELECT contract_address, block_number, x,y, ROW_NUMBER() OVER(PARTITION BY contract_address ORDER BY block_number)
+    (SELECT contract_address, block_number, x,y, ROW_NUMBER() OVER(PARTITION BY contract_address ORDER BY block_number desc)
       FROM reserves ORDER BY contract_address, block_number)
    SELECT p1.contract_address as p1_contract_address,
           p2.contract_address as p2_contract_address,
